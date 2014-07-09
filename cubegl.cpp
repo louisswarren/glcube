@@ -3,6 +3,9 @@
 #include <GL/glut.h>
 using namespace std;
 
+float turningAngle = 180;
+float turningSpeed = 10;
+
 void display(void) 
 { 
 	float lpos[4]={0., 10., 10., 1.0};  //light's position
@@ -11,7 +14,7 @@ void display(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	gluLookAt(5, 5, 8, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);  //Camera position and orientation
+	gluLookAt(-5, 5, 8, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);  //Camera position and orientation
 
 	glLightfv(GL_LIGHT0,GL_POSITION, lpos);   //Set light position
 
@@ -24,6 +27,8 @@ void display(void)
 				if (!(x || y || z)) continue; // Skip middle
 				glPushMatrix();
 					glColor3f((x+1.0)/3.0,(y+1.0)/3.0,(z+1.0)/3.0);
+					if (z == 1)
+						glRotatef(turningAngle, 0, 0, 1);
 					glTranslated(x, y, z);
 					glutSolidCube(1);
 				glPopMatrix();
@@ -34,7 +39,32 @@ void display(void)
 	glFlush(); 
 } 
 
-//----------------------------------------------------------------------
+void turningTimer(int data)
+{
+	if (turningAngle > turningSpeed*2) {
+		turningAngle -= turningSpeed;
+	} else if (turningAngle < -turningSpeed*2) {
+		turningAngle += turningSpeed;
+	} else if (fabs(turningAngle) > turningSpeed / 8) {
+		turningAngle *= 0.6;
+	} else {
+		turningAngle = 0;
+	}
+
+	glutPostRedisplay();
+	glutTimerFunc(25, turningTimer, 0);
+}
+
+void special(int key, int x, int y)
+{
+	if (key == GLUT_KEY_RIGHT)
+		turningAngle += 90;
+	if (key == GLUT_KEY_LEFT)
+		turningAngle -= 90;
+	
+	glutPostRedisplay();
+}
+
 void initialize(void)
 {
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -59,6 +89,8 @@ int main(int argc, char **argv)
 	glutCreateWindow("Teapot");
 	initialize();
 	glutDisplayFunc(display);
+	glutTimerFunc(25, turningTimer, 0);
+	glutSpecialFunc(special);
 	glutMainLoop();
 	return 0; 
 }
